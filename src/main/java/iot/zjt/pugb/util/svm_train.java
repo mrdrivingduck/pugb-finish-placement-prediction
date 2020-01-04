@@ -126,7 +126,7 @@ public class svm_train {
 	public static void main(String argv[]) throws IOException
 	{
 		svm_train t = new svm_train();
-		t.run(argv);
+		t.run(new String[]{ "-s", "4", "-t", "0", "data/inputScaled.data", "model/nu-SVR-linear.java.model" });
 	}
 
 	private static double atof(String s)
