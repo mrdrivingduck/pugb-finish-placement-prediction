@@ -11,25 +11,25 @@ import org.apache.commons.csv.CSVRecord;
 public class Format {
 
     private static String[] features = new String[] {
-        "assists",
-        "damageDealt",
-        "DBNOs",
-        "headshotKills",
-        "heals",
-        "killPlace",
-        "killPoints",
-        "kills",
-        "killStreaks",
-        "longestKill",
-        "maxPlace",
-        "rankPoints",
-        "revives",
-        "roadKills",
-        "teamKills",
+        // "assists",
+        // "damageDealt",
+        // "DBNOs",
+        // "headshotKills",
+        // "heals",
+        // "killPlace",
+        // "killPoints",
+        // "kills",
+        // "killStreaks",
+        // "longestKill",
+        // "maxPlace",
+        // "rankPoints",
+        // "revives",
+        // "roadKills",
+        // "teamKills",
         "walkDistance",
-        "walkDistance",
-        "weaponsAcquired",
-        "winPoints"
+        // "swimDistance",
+        // "weaponsAcquired",
+        // "winPoints"
     };
 
     private static String labelFeature = new String("winPlacePerc");
@@ -38,11 +38,14 @@ public class Format {
 
         Writer out = new FileWriter("data/input.data");
 
-        Reader in = new FileReader("data/sorted.csv");
+        Reader in = new FileReader("data/train_V2.csv");
         Iterable<CSVRecord> recordIter = CSVFormat.RFC4180.withFirstRecordAsHeader().parse(in);
         for (CSVRecord record : recordIter) {
 
             String label = record.get(labelFeature);
+            if (label == null || label.equals("")) {
+                label = new String("0.0000");
+            }
             out.write(label);
             out.write(" ");
 
