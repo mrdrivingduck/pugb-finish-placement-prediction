@@ -8,8 +8,11 @@
 
 import pandas as pd
 import os
+import time
 from sklearn import tree
-from joblib import dump, load
+from joblib import dump
+
+start_time = time.time()
 
 features = ["assists", "DBNOs", "headshotKills", "killPoints", "kills", "killStreaks", "walkDistance"]
 # modes = ["solo", "duo", "squad", "solo-fpp", "duo-fpp", "squad-fpp"]
@@ -19,48 +22,53 @@ print(data.columns)
 print(data.shape)
 lines = data.shape[0]
 
-cur = 0
-featureArray = []
-labelArray = []
-matchId = ""
-matchType = ""
+cur = 2449961
+feature_array = []
+label_array = []
+match_id = ""
+match_type = ""
 
 if not os.path.isdir("model"):
     os.makedirs("model")
 
 while cur < lines:
-    rowMatchId = data.loc[cur, ["matchId"]][0]
-    rowMatchType = data.loc[cur, ["matchType"]][0]
+    row_match_id = data.loc[cur, ["matchId"]][0]
+    row_match_type = data.loc[cur, ["matchType"]][0]
 
     # Enter an new match
     # 1. Train and save the old model
     # 2. Reinitialize
-    if matchId != "" and rowMatchId != matchId:
+    if match_id != "" and row_match_id != match_id and len(label_array) > 0:
         clf = tree.DecisionTreeRegressor()
-        clf = clf.fit(featureArray, labelArray)
+        clf = clf.fit(feature_array, label_array)
 
-        if not os.path.isdir("model/" + rowMatchType):
-            os.makedirs("model/" + rowMatchType)
-        dump(clf, "model/" + rowMatchType + "/" + matchId + ".joblib")
-        print("Dump: the model of match " + str(matchId) + " saved.")
-        print("Model trained by " + str(len(labelArray)) + " rows of data.")
+        if not os.path.isdir("model/" + row_match_type):
+            os.makedirs("model/" + row_match_type)
+        dump(clf, "model/" + row_match_type + "/" + match_id + ".joblib")
+        print("Dump: the model of match " + str(match_id) + " saved.")
+        print("Model trained by " + str(len(label_array)) + " rows of data.")
 
         # newClf = load("model/" + matchId + ".joblib")
         # print(newClf.predict([[0, 0, 0, 0, 2, 1, 2017]]))
         # break
 
-        featureArray = []
-        labelArray = []
-        print("New match: " + rowMatchId + " ,type: " + rowMatchType)
+        feature_array = []
+        label_array = []
+        print("New match: " + row_match_id + " ,type: " + row_match_type)
 
-    matchId = rowMatchId
-    matchType = rowMatchType
+    match_id = row_match_id
+    match_type = row_match_type
     feature = data.loc[cur, features].tolist()
     label = data.loc[cur, ["winPlacePerc"]][0]
-    featureArray.append(feature)
-    labelArray.append(label)
+    if pd.isnull(label):
+        cur += 1
+        continue
+    feature_array.append(feature)
+    label_array.append(label)
 
     cur += 1
     if cur % 5000 == 0:
         print("Process: " + str(cur) + "/" + str(lines) + " (" + str(cur/lines*100) + "%)")
 
+end_time = time.time()
+print("Finished in " + str(end_time - start_time) + " seconds.")
