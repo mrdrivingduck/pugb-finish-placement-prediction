@@ -8,7 +8,7 @@ import time
 import pandas as pd
 
 
-def preprocess_sort(train_data):
+def pre_process_sort(train_data):
     start_time = time.time()
 
     if not os.path.isdir("data"):

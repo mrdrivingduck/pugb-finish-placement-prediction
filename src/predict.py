@@ -11,6 +11,7 @@ from multiprocessing import Process
 from joblib import load
 
 
+# called by every process/thread
 def predict(features, max_predictor, data, out_name, start_index, end_index):
     ids = []
     win_per = []
