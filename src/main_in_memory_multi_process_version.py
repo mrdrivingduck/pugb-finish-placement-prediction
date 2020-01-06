@@ -4,7 +4,11 @@ import os
 import time
 import random
 import pandas as pd
+from multiprocessing import Process
 from sklearn import tree
+
+
+models = {}
 
 
 # train_data: train_V2.csv
@@ -24,10 +28,8 @@ def pre_process_sort(train_data):
     print("Finished in " + str(end_time - start_time) + " seconds.")
 
 
-models = {}
-
-
 def model_generate(features):
+    global models
     start_time = time.time()
 
     data = pd.read_csv("data/sorted_train.csv")
@@ -79,32 +81,28 @@ def model_generate(features):
     print("Finished in " + str(end_time - start_time) + " seconds.")
 
 
-def predict(features, max_predictor, test_data_path, out_name):
+def predict(features, max_predictor, data, out_name, start_index, end_index, models_dict):
     ids = []
     win_per = []
 
-    data = pd.read_csv(test_data_path)
-    print(data.shape)
-
-    cur = start_index = 0
-    end_index = data.shape[0]
+    cur = start_index
 
     while cur < end_index:
         feature = data.loc[cur, features].tolist()
         row_match_type = data.loc[cur, ["matchType"]][0]
         row_id = data.loc[cur, ["Id"]][0]
 
-        # print("Predicting a " + row_match_type + " type match record...")
+        print("Predicting a " + row_match_type + " type match record...")
 
         count = 0
         res = 0.0
 
-        if len(models.get(row_match_type)) > max_predictor:
-            for clf in random.sample(models.get(row_match_type)):
+        if len(models_dict.get(row_match_type)) > max_predictor:
+            for clf in random.sample(models_dict.get(row_match_type)):
                 res += clf.predict([feature])
                 count += 1
         else:
-            for clf in models.get(row_match_type):
+            for clf in models_dict.get(row_match_type):
                 res += clf.predict([feature])
                 count += 1
 
@@ -121,12 +119,46 @@ def predict(features, max_predictor, test_data_path, out_name):
                   " (" + str((cur-start_index)/(end_index-start_index)*100) + "%)")
 
     df = pd.DataFrame(data={"Id": ids, "winPlacePerc": win_per})
+    df.to_csv(out_name + ".csv", header=True, index=False)
+
+
+def predict_main(source, features, max_predictor, out_name, max_processes):
+    start_time = time.time()
+
+    data = pd.read_csv(source)
+    print(data.shape)
+    lines = data.shape[0]
+
+    processes = []
+
+    for i in range(max_processes):
+        start_idx = int(lines * i / max_processes)
+        end_idx = int(lines * (i + 1) / max_processes)
+        p = Process(target=predict, args=(features, max_predictor, data, out_name + str(i), start_idx, end_idx, models))
+        processes.append(p)
+
+    for i in range(max_processes):
+        processes[i].start()
+
+    for i in range(max_processes):
+        processes[i].join()
+
+    end_time = time.time()
+    print("Finished in " + str(end_time - start_time) + " seconds.")
+
+
+def combine(in_name, processes, out_name):
+    df = pd.DataFrame()
+    for i in range(processes):
+        data = pd.read_csv(in_name + str(i) + ".csv")
+        df = df.append(data)
     df.to_csv(out_name, header=True, index=False)
 
 
 # main
-
-f = ["assists", "DBNOs", "headshotKills", "killPoints", "kills", "killStreaks", "walkDistance"]
-pre_process_sort("data/train_V1.csv")
-model_generate(f)
-predict(f, 2000, "data/test_V1.csv", "data/submit.csv")
+if __name__ == "__main__":
+    f = ["assists", "DBNOs", "headshotKills", "killPoints", "kills", "killStreaks", "walkDistance"]
+    pre_process_sort("data/train_V1.csv")
+    model_generate(f)
+    predict_main("data/test_V1.csv", f, 2000, "data/submit", 4)
+    combine("data/submit", 4, "data/final.csv")
