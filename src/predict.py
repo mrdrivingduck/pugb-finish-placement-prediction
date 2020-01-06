@@ -1,32 +1,23 @@
 '''
     @author Mr Dk.
-    @version 2019.01.05
+    @version 2019.01.06
 '''
 
 import os
 import time
 import random
 import pandas as pd
+from multiprocessing import Process
 from joblib import load
 
 
-# features = ["assists", "DBNOs", "headshotKills", "killPoints", "kills", "killStreaks", "walkDistance"]
-# max_predictor = 2000
-
-
-def predict(features, max_predictor, out_file):
-    start_time = time.time()
-
-    data = pd.read_csv("data/test_V2.csv")
-    print(data.shape)
-    lines = data.shape[0]
-
+def predict(features, max_predictor, data, out_name, start_index, end_index):
     ids = []
     win_per = []
 
-    cur = 0
+    cur = start_index
 
-    while cur < lines:
+    while cur < end_index:
         feature = data.loc[cur, features].tolist()
         row_match_type = data.loc[cur, ["matchType"]][0]
         row_id = data.loc[cur, ["Id"]][0]
@@ -58,11 +49,41 @@ def predict(features, max_predictor, out_file):
         # break  # for debug purpose
 
         cur += 1
-        if cur % 5000 == 0:
-            print("Process: " + str(cur) + "/" + str(lines) + " (" + str(cur/lines*100) + "%)")
+        print(cur)
+        if cur % 500 == 0:
+            print("Process: " + str(cur-start_index) + "/" + str(end_index-start_index) +
+                  " (" + str((cur-start_index)/(end_index-start_index)*100) + "%)")
 
     df = pd.DataFrame(data={"Id": ids, "winPlacePerc": win_per})
-    df.to_csv(out_file, header=True, index=False)
+    df.to_csv(out_name + ".csv", header=True, index=False)
+
+
+def predict_main(source, features, max_predictor, out_name, max_processes):
+    start_time = time.time()
+
+    data = pd.read_csv(source)
+    print(data.shape)
+    lines = data.shape[0]
+
+    processes = []
+
+    for i in range(max_processes):
+        start_idx = int(lines * i / max_processes)
+        end_idx = int(lines * (i + 1) / max_processes)
+        p = Process(target=predict, args=(features, max_predictor, data, out_name + str(i), start_idx, end_idx))
+        processes.append(p)
+
+    for i in range(max_processes):
+        processes[i].start()
+
+    for i in range(max_processes):
+        processes[i].join()
 
     end_time = time.time()
     print("Finished in " + str(end_time - start_time) + " seconds.")
+
+
+if __name__ == "__main__":
+    f = ["assists", "DBNOs", "headshotKills", "killPoints", "kills", "killStreaks", "walkDistance"]
+    max_predict = 500
+    predict_main("data/test_V2.csv", f, max_predict, "data/out", 6)
