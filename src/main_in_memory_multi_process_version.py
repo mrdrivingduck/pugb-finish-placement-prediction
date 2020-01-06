@@ -3,6 +3,7 @@
 import os
 import time
 import random
+import pickle
 import pandas as pd
 from multiprocessing import Process
 from sklearn import tree
@@ -75,6 +76,13 @@ def model_generate(features):
         cur += 1
         if cur % 5000 == 0:
             print("Process: " + str(cur) + "/" + str(lines) + " (" + str(cur/lines*100) + "%)")
+
+    # save the models
+    if not os.path.isdir("model"):
+        os.makedirs("model")
+    pickle_file = open("model/models.pkl", "wb")
+    pickle.dump(models, pickle_file)
+    pickle_file.close()
 
     end_time = time.time()
     print("Finished in " + str(end_time - start_time) + " seconds.")
@@ -156,7 +164,7 @@ def combine(in_name, processes, out_name):
 # main
 if __name__ == "__main__":
     f = ["assists", "DBNOs", "headshotKills", "killPoints", "kills", "killStreaks", "walkDistance"]
-    pre_process_sort("data/train_V2.csv")
+    # pre_process_sort("data/train_V2.csv")
     model_generate(f)
     predict_main("data/test_V2.csv", f, 2000, "data/submit", 4)
     combine("data/submit", 4, "data/final.csv")

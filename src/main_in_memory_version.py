@@ -124,6 +124,6 @@ def predict(features, max_predictor, test_data_path, out_name):
 
 # main
 f = ["assists", "DBNOs", "headshotKills", "killPoints", "kills", "killStreaks", "walkDistance"]
-pre_process_sort("data/train_V1.csv")
+# pre_process_sort("data/train_V2.csv")
 model_generate(f)
-predict(f, 2000, "data/test_V1.csv", "data/submit.csv")
+predict(f, 2000, "data/test_V2.csv", "data/submit.csv")
