@@ -100,7 +100,7 @@ def predict(features, max_predictor, test_data_path, out_name):
         res = 0.0
 
         if len(models.get(row_match_type)) > max_predictor:
-            for clf in random.sample(models.get(row_match_type)):
+            for clf in random.sample(models.get(row_match_type), max_predictor):
                 res += clf.predict([feature])
                 count += 1
         else:
@@ -113,8 +113,6 @@ def predict(features, max_predictor, test_data_path, out_name):
         ids.append(row_id)
         win_per.append(res[0])
 
-        # break  # for debug purpose
-
         cur += 1
         if cur % 2000 == 0:
             print("Process: " + str(cur-start_index) + "/" + str(end_index-start_index) +
@@ -125,7 +123,6 @@ def predict(features, max_predictor, test_data_path, out_name):
 
 
 # main
-
 f = ["assists", "DBNOs", "headshotKills", "killPoints", "kills", "killStreaks", "walkDistance"]
 pre_process_sort("data/train_V1.csv")
 model_generate(f)
