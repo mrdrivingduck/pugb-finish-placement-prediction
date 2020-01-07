@@ -9,9 +9,6 @@ from multiprocessing import Process
 from sklearn import tree
 
 
-models = {}
-
-
 def pre_process_sort(train_data):
     start_time = time.time()
 
@@ -29,8 +26,8 @@ def pre_process_sort(train_data):
 
 
 def model_generate(features):
-    global models
     start_time = time.time()
+    models = {}
 
     data = pd.read_csv("data/sorted_train.csv")
     print(data.columns)
@@ -86,20 +83,23 @@ def model_generate(features):
 
     end_time = time.time()
     print("Finished in " + str(end_time - start_time) + " seconds.")
+    return models
 
 
-def predict(features, max_predictor, data, out_name, start_index, end_index, models_dict):
+def predict(features, max_predictor, data, out_name, start_index, end_index,
+            models_dict, process_index):
     ids = []
     win_per = []
 
     cur = start_index
+    print_time = time.time()
 
     while cur < end_index:
         feature = data.loc[cur, features].tolist()
         row_match_type = data.loc[cur, ["matchType"]][0]
         row_id = data.loc[cur, ["Id"]][0]
 
-        print("Predicting a " + row_match_type + " type match record...")
+        # print("Predicting a " + row_match_type + " type match record...")
 
         count = 0
         res = 0.0
@@ -120,14 +120,18 @@ def predict(features, max_predictor, data, out_name, start_index, end_index, mod
 
         cur += 1
         if cur % 2000 == 0:
-            print("Process: " + str(cur-start_index) + "/" + str(end_index-start_index) +
+            print("Process" + str(process_index) + ": " +
+                  str(cur-start_index) + "/" + str(end_index-start_index) +
                   " (" + str((cur-start_index)/(end_index-start_index)*100) + "%)")
+            cur_time = time.time()
+            print(cur_time - print_time)
+            print_time = cur_time
 
     df = pd.DataFrame(data={"Id": ids, "winPlacePerc": win_per})
     df.to_csv(out_name + ".csv", header=True, index=False)
 
 
-def predict_main(source, features, max_predictor, out_name, max_processes):
+def predict_main(source, features, max_predictor, out_name, max_processes, models):
     start_time = time.time()
 
     data = pd.read_csv(source)
@@ -139,7 +143,7 @@ def predict_main(source, features, max_predictor, out_name, max_processes):
     for i in range(max_processes):
         start_idx = int(lines * i / max_processes)
         end_idx = int(lines * (i + 1) / max_processes)
-        p = Process(target=predict, args=(features, max_predictor, data, out_name + str(i), start_idx, end_idx, models))
+        p = Process(target=predict, args=(features, max_predictor, data, out_name + str(i), start_idx, end_idx, models, i))
         processes.append(p)
 
     for i in range(max_processes):
@@ -165,6 +169,10 @@ def combine(in_name, processes, out_name):
 if __name__ == "__main__":
     f = ["assists", "DBNOs", "headshotKills", "killPoints", "kills", "killStreaks", "walkDistance"]
     # pre_process_sort("data/train_V2.csv")
-    model_generate(f)
-    predict_main("data/test_V2.csv", f, 2000, "data/submit", 4)
+    # model = model_generate(f)
+
+    pickle_file = open("model/models.pkl", "rb")
+    model = pickle.load(pickle_file)
+    pickle_file.close()
+    predict_main("data/test_V2.csv", f, 2000, "data/submit", 4, model)
     combine("data/submit", 4, "data/final.csv")
