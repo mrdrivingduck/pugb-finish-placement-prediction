@@ -1,3 +1,7 @@
+'''
+    @author Mr Dk.
+    @version 2020/01/08
+'''
 
 
 import os
@@ -9,6 +13,8 @@ from multiprocessing import Process
 from sklearn import tree
 
 
+# Sort the CSV file by columns ["matchType", "matchId", "groupId"]
+# Easier for model training
 def pre_process_sort(train_data):
     start_time = time.time()
 
@@ -25,6 +31,8 @@ def pre_process_sort(train_data):
     print("Finished in " + str(end_time - start_time) + " seconds.")
 
 
+# Generate model by the sorted data
+# Store the whole model after training
 def model_generate(features):
     start_time = time.time()
     models = {}
@@ -86,6 +94,7 @@ def model_generate(features):
     return models
 
 
+# Use the model to predict data in the specific range (each process)
 def predict(features, max_predictor, data, out_name, start_index, end_index,
             models_dict, process_index):
     ids = []
@@ -131,8 +140,13 @@ def predict(features, max_predictor, data, out_name, start_index, end_index,
     df.to_csv(out_name + ".csv", header=True, index=False)
 
 
-def predict_main(source, features, max_predictor, out_name, max_processes, models):
+# Schedule the job to multiple processes
+def predict_main(source, features, max_predictor, out_name, max_processes):
     start_time = time.time()
+
+    pickle_file = open("model/models.pkl", "rb")
+    models = pickle.load(pickle_file)
+    pickle_file.close()
 
     data = pd.read_csv(source)
     print(data.shape)
@@ -178,9 +192,5 @@ if __name__ == "__main__":
     # pre_process_sort("data/train_V2.csv")
     # model = model_generate(f)
 
-    pickle_file = open("model/models.pkl", "rb")
-    model = pickle.load(pickle_file)
-    pickle_file.close()
-
-    predict_main("data/test_V2.csv", f, max_predictor, "data/submit", core, model)
+    predict_main("data/test_V2.csv", f, max_predictor, "data/submit", core)
     combine("data/submit", core, "data/final.csv")
