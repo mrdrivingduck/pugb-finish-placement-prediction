@@ -167,12 +167,19 @@ def combine(in_name, processes, out_name):
 
 # main
 if __name__ == "__main__":
-    f = ["assists", "DBNOs", "headshotKills", "killPoints", "kills", "killStreaks", "walkDistance"]
+    core = 7
+    max_predictor = 2000
+    f = ["walkDistance", "killStreaks", "rideDistance", "kills", "heals", "boosts",
+         "damageDealt", "weaponsAcquired", "headshotKills", "teamKills", "roadKills", "swimDistance", "revives",
+         "assists", "killPlace", "longestKill", "vehicleDestroys",
+         "matchDuration", "rankPoints", "killPoints"]
+         
     # pre_process_sort("data/train_V2.csv")
-    # model = model_generate(f)
+    model = model_generate(f)
 
-    pickle_file = open("model/models.pkl", "rb")
-    model = pickle.load(pickle_file)
-    pickle_file.close()
-    predict_main("data/test_V2.csv", f, 2000, "data/submit", 4, model)
-    combine("data/submit", 4, "data/final.csv")
+    # pickle_file = open("model/models.pkl", "rb")
+    # model = pickle.load(pickle_file)
+    # pickle_file.close()
+
+    # predict_main("data/test_V2.csv", f, max_predictor, "data/submit", core, model)
+    # combine("data/submit", core, "data/final.csv")
