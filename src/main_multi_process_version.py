@@ -186,11 +186,10 @@ if __name__ == "__main__":
     f = ["walkDistance", "killStreaks", "rideDistance", "kills", "heals", "boosts",
          "damageDealt", "weaponsAcquired", "headshotKills", "teamKills", "roadKills", "swimDistance", "revives",
          "assists", "killPlace", "longestKill", "vehicleDestroys",
-         "matchDuration", "rankPoints", "killPoints",
-         "numGroups", "DBNOs", "winPoints", "maxPlace"]
+         "rankPoints", "killPoints", "DBNOs"]
          
     # pre_process_sort("data/train_V2.csv")
-    # model = model_generate(f)
+    model = model_generate(f)
 
-    predict_main("data/test_V2.csv", f, max_predictor, "data/submit", core)
-    combine("data/submit", core, "data/final.csv")
+    # predict_main("data/test_V2.csv", f, max_predictor, "data/submit", core)
+    # combine("data/submit", core, "data/final.csv")
