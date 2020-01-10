@@ -1,3 +1,9 @@
+'''
+    @author Mr Dk.
+    @version 2020/01/10
+'''
+
+
 import time
 import pickle
 import os

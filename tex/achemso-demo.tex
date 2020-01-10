@@ -121,12 +121,56 @@ between the prediction and the groud-truth.
 
 \section{Analysis and Motivation}
 
-\subsection{Analysis on Data}
+\subsection{Version 1}
 
 For the given training data, we can see that it either describe the behavior of a player
-or the metadata of a match.
+or the metadata of a match. According to my experience of playing computer games when I
+was a teenager, the final data of a match is strongly related to the match type.
+For different match types, there are different rules and strategies, which may affect the
+players' data like walking distance and killing count. So my first motivation is to
+split the training set by different match types.
 
-For a match, 
+And also, during different matches, one player tend to perform differently. He may shoot
+well in one game, while missing everything he shoot in another game. My second motivation
+is to train a model for each game.
+
+From the course \emph{Machine Learning}, I have learned about the power of ensemble learning.
+So I tried to use all models of the same match type to predict a record from a corresponding
+match type, and get an average value as the final result.
+
+\subsection{Version 2}
+
+In the algorithm of version 1, the data for training a model comes from a single game,
+containing less than 100 rows, which is too few for training a model empirically.
+So I tried to use more data for each model's generation. However, the amount of
+data for each match type is totally different. As a result, for a match type with few
+rows of data, it is impossible to train models with much data.
+
+My solution is to train models with different types of model. I split the whole training
+set into 100 parts, and use each part to train a model. While predicting a record, I 
+use all of the 100 models to predict and use the average as the final result.
+
+\section{Algorithm and Implementation}
+
+\subsection{Version 1}
+
+For the first version of my algorithm, I choose the following features: ["walkDistance",
+"killStreaks", "rideDistance", "kills", "heals", "boosts", "damageDealt", "weaponsAcquired",
+"headshotKills", "teamKills", "roadKills", "swimDistance", "revives", "assists", "killPlace",
+"longestKill", "vehicleDestroys"]. The reason is that, these are all features describing a 
+player, instead of a match. In my opinion, since I train a model for each match, the features
+describing the match are meaningless, because they are all the same.
+
+I choose \textbf{Decision Tree regressor} as the algorithm. The reason is that it can 
+save the effort of decomposition, since I don't know which feature is more important for 
+the result. It can judge the best feature for me.
+
+In order to train models by matches, I sort the whole training data by match type and matchID.
+For each matchID, I train a model using all rows with this matchID, and add the model to the 
+set of corresponding match type. During prediction, I used all the models of that match type 
+to calculate the average result.
+
+Specifically, 
 
 
 \section{Results and discussion}

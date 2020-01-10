@@ -182,14 +182,14 @@ def combine(in_name, processes, out_name):
 # main
 if __name__ == "__main__":
     core = 11
-    max_predictor = 2000
-    f = ["walkDistance", "killStreaks", "rideDistance", "kills", "heals", "boosts",
-         "damageDealt", "weaponsAcquired", "headshotKills", "teamKills", "roadKills", "swimDistance", "revives",
-         "assists", "killPlace", "longestKill", "vehicleDestroys",
-         "rankPoints", "killPoints", "DBNOs"]
+    max_predictor = 1500
+    f = ["walkDistance",
+        "killStreaks", "rideDistance", "kills", "heals", "boosts", "damageDealt", "weaponsAcquired",
+        "headshotKills", "teamKills", "roadKills", "swimDistance", "revives", "assists", "killPlace",
+        "longestKill", "vehicleDestroys"]
          
-    # pre_process_sort("data/train_V2.csv")
+    pre_process_sort("data/train_V2.csv")
     model = model_generate(f)
 
-    # predict_main("data/test_V2.csv", f, max_predictor, "data/submit", core)
-    # combine("data/submit", core, "data/final.csv")
+    predict_main("data/test_V2.csv", f, max_predictor, "data/submit", core)
+    combine("data/submit", core, "data/submission.csv")
