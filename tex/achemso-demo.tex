@@ -97,21 +97,17 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{About the Task}
 
-\subsection{The Platform and the Data Source}
-
 Our task is to finish a competition on \emph{kaggle}, which is a platform
 for machine learning competitions. Specifically, our task is based on a
 famous computer game called \emph{PLAYERUNKNOWN’S BATTLEGROUNDS (PUBG)}.
-In this game, 100 players will be dropped onto an island called Erangel
+In this game, up to 100 players will be dropped onto an island called Erangel
 empty-handed. They must explore, scavenge, and eliminate other players until
 only one of them is left standing, all while the play zone continues to
 shrink.
 
-\subsection{The Data}
-
 We are given some anomymized player data from 65000 games. The data is split
-into training set and testing set. In the training set, we have what a player
-perform in each game in all aspects, like different kinds of killing, or the
+into training set and testing set. In the training set, we have the data describing
+the player's performance, like various kinds of killing count, or the
 moving distance on a car or under water. And also, we have a winning placement
 percentage \textbf{winPlacePerc}, ranging from 0 to 1, where 1 corresponds to
 1st place, and 0 corresponds to last place. This percentage is the target of
@@ -126,30 +122,31 @@ between the prediction and the groud-truth.
 
 For the given training data, we can see that it either describe the behavior of a player
 or the metadata of a match. According to my experience of playing computer games when I
-was a teenager, the final data of a match is strongly related to the match type.
+was a teenager, the final score of a match is strongly related to the match type.
 For different match types, there are different rules and strategies, which may affect the
 players' data like walking distance and killing count. So my first motivation is to
 split the training set by different match types.
 
 And also, during different matches, one player tend to perform differently. He may shoot
 well in one game, while missing everything he shoot in another game. My second motivation
-is to train a model for each game.
+is to train a model for each single game.
 
 From the course \emph{Machine Learning}, I have learned about the power of ensemble learning.
-So I tried to use all models of the same match type to predict a record from a corresponding
-match type, and get an average value as the final result.
+So I tried to use all models of the same match type to predict a record from the corresponding
+match type, and get the average value as the final prediction result.
 
 \subsection{Version 2}
 
 In the algorithm of version 1, the data for training a model comes from a single game,
 containing less than 100 rows, which is too few for training a model empirically.
-So I tried to use more data for each model's generation. However, the amount of
-data for each match type is totally different. As a result, for a match type with few
-rows of data, it is impossible to train models with much data.
+So I tried to use more data for each model's training process. However, the amount of
+data for each match type is totally different. As a result, it is impossible to train models
+for match types without much data.
 
-My solution is to train models with different types of model. I split the whole training
-set into 100 parts, and use each part to train a model. While predicting a record, I 
-use all of the 100 models to predict and use the average as the final result.
+My solution is to train models by different types of match. I split the whole training
+set into 100 parts, and use each part to train a model. Each part contains about 45000 rows
+of data from different match types. While predicting a record, I 
+use all of the 100 models to predict and use the average value as the final result.
 
 \section{Algorithm and Implementation}
 
@@ -158,19 +155,19 @@ use all of the 100 models to predict and use the average as the final result.
 For the first version of my algorithm, I choose the following features: ["walkDistance",
 "killStreaks", "rideDistance", "kills", "heals", "boosts", "damageDealt", "weaponsAcquired",
 "headshotKills", "teamKills", "roadKills", "swimDistance", "revives", "assists", "killPlace",
-"longestKill", "vehicleDestroys"]. The reason is that, these are all features describing a 
-player, instead of a match. In my opinion, since I train a model for each match, the features
-describing the match are meaningless, because they are all the same.
+"longestKill", "vehicleDestroys"]. The reason is that, these features are all used to describe a 
+player, instead of a match. In my opinion, since I train a model for each single match,
+the features describing the match are meaningless, because they are the same for the same match.
 
 I choose \textbf{Decision Tree regressor} as the algorithm. The reason is that it can 
 save the effort of decomposition, since I don't know which feature is more important for 
-the result. It can judge the best feature for me.
+the result. It can judge the best feature for me automatically.
 
 In order to train a model from a match, I sorted the whole training data by match type and matchID.
 For each matchID, I trained a model using all rows with this matchID, and added the model to the 
 set of corresponding match type. During prediction, I used all the models of that match type 
-to calculate a average result, which is an application of ensemble learning: considering
-the matches are inherently independent to each other, the model trained by each match 
+to calculate the average prediction value, which is an application of ensemble learning: considering
+the matches are inherently independent to each other, the model generated from each match 
 can do prediction independently.
 
 Specifically, to speed up the prediction, for match types with much more data, which corresponds
@@ -181,11 +178,11 @@ which can fully utilize the multi-core CPU. The source code is available at my
 
 \subsection{Version 2}
 
-For the second version of algorithm, I trained 100 models with about 45000 rows of data each,
+For the second version of my algorithm, I trained 100 models with about 45000 rows of data each,
 and used all models together to predict a record. I tried several ensumble learning algorithms,
 including \textbf{XGBoost regressor}, \textbf{Random Forest regressor}, \textbf{AdaBoost regressor}
 and \textbf{Gradient Boosting regressor}. They are all using ensemble method inside.
-I integrated them together for the seconde time of emsemble learning.
+I integrated them together for the second time of ensemble learning.
 The source code is available at my
 \href{https://github.com/mrdrivingduck/pugb-finish-placement-prediction/blob/master/src/main_ensemble.py}{GitHub}.
 
@@ -193,14 +190,14 @@ The source code is available at my
 
 \subsection{Version 1}
 
-For the version 1 algorithm, I tried different parameter of max predictor threshold.
+For the version 1 algorithm, I tried different parameters of max predictor threshold.
 If a match type contains more models than the threshold, then only models of the
 threshold would get involved into the prediction.
 
 At first, I introduced this parameter for speeding up the prection process. However,
-according to the experiment, a greater threshold will not get a better score.
-I used the threshold of 500, 1000, 1500, 2000. 1500 gets the following best score, while 1000
-is not better than 500 and 2000 is not better than 1500.
+according to the experiment, I found a greater threshold would not get a better score.
+I used the threshold of 500, 1000, 1500, 2000, among which 1500 gets the following best score,
+while 1000 is not better than 500 and 2000 is not better than 1500.
 
 \begin{figure}
   \includegraphics[height=2.4cm]{img/res-version-1.png}
@@ -208,9 +205,9 @@ is not better than 500 and 2000 is not better than 1500.
 
 \subsection{Version 2}
 
-For the version2 algorithm, I just tried different ensemble learning method:
+For the version 2 algorithm, I just tried different ensemble learning method:
 \textbf{XGBoost regressor}, \textbf{Random Forest regressor}, \textbf{AdaBoost regressor}
-and \textbf{Gradient Boosting regressor}, Among which Random Forest regressor 
+and \textbf{Gradient Boosting regressor}, among which Random Forest regressor 
 got the following best score.
 
 \begin{figure}
@@ -220,252 +217,13 @@ got the following best score.
 
 \section{Thoughts}
 
-I didn't do much work about features, which should be an important part in machine learning.
-In fact, 
-
-
-
-\section{Results and discussion}
-
-\subsection{Outline}
-
-The document layout should follow the style of the journal concerned.
-Where appropriate, sections and subsections should be added in the
-normal way. If the class options are set correctly, warnings will be
-given if these should not be present.
-
-\subsection{References}
-
-The class makes various changes to the way that references are
-handled.  The class loads \textsf{natbib}, and also the
-appropriate bibliography style.  References can be made using
-the normal method; the citation should be placed before any
-punctuation, as the class will move it if using a superscript
-citation style
-\cite{Mena2000,Abernethy2003,Friedman-Hill2003,EuropeanCommission2008}.
-The use of \textsf{natbib} allows the use of the various citation
-commands of that package: \citeauthor{Abernethy2003} have shown
-something, in \citeyear{Cotton1999}, or as given by
-Ref.~\citenum{Mena2000}.  Long lists of authors will be
-automatically truncated in most article formats, but not in
-supplementary information or reviews \cite{Pople2003}. If you
-encounter problems with the citation macros, please check that
-your copy of \textsf{natbib} is up to date. The demonstration
-database file \texttt{achemso-demo.bib} shows how to complete
-entries correctly. Notice that ``\latin{et al.}'' is auto-formatted
-using the \texttt{\textbackslash latin} command.
-
-Multiple citations to be combined into a list can be given as
-a single citation.  This uses the \textsf{mciteplus} package
-\cite{Johnson1972,*Arduengo1992,*Eisenstein2005,*Arduengo1994}.
-Citations other than the first of the list should be indicated
-with a star. If the \textsf{mciteplus} package is not installed,
-the standard bibliography tools will still work but starred
-references will be ignored. Individual references can be referred
-to using \texttt{\textbackslash mciteSubRef}:
-``ref.~\mciteSubRef{Eisenstein2005}''.
-
-The class also handles notes to be added to the bibliography.  These
-should be given in place in the document \bibnote{This is a note.
-The text will be moved the the references section.  The title of the
-section will change to ``Notes and References''.}.  As with
-citations, the text should be placed before punctuation.  A note is
-also generated if a citation has an optional note.  This assumes that
-the whole work has already been cited: odd numbering will result if
-this is not the case \cite[p.~1]{Cotton1999}.
-
-\subsection{Floats}
-
-New float types are automatically set up by the class file.  The
-means graphics are included as follows (Scheme~\ref{sch:example}).  As
-illustrated, the float is ``here'' if possible.
-\begin{scheme}
-  Your scheme graphic would go here: \texttt{.eps} format\\
-  for \LaTeX\, or \texttt{.pdf} (or \texttt{.png}) for pdf\LaTeX\\
-  \textsc{ChemDraw} files are best saved as \texttt{.eps} files:\\
-  these can be scaled without loss of quality, and can be\\
-  converted to \texttt{.pdf} files easily using \texttt{eps2pdf}.\\
-  %\includegraphics{graphic}
-  \caption{An example scheme}
-  \label{sch:example}
-\end{scheme}
-
-\begin{figure}
-  As well as the standard float types \texttt{table}\\
-  and \texttt{figure}, the class also recognises\\
-  \texttt{scheme}, \texttt{chart} and \texttt{graph}.
-  \caption{An example figure}
-  \label{fgr:example}
-\end{figure}
-
-Charts, figures and schemes do not necessarily have to be labelled or
-captioned.  However, tables should always have a title. It is
-possible to include a number and label for a graphic without any
-title, using an empty argument to the \texttt{\textbackslash caption}
-macro.
-
-The use of the different floating environments is not required, but
-it is intended to make document preparation easier for authors. In
-general, you should place your graphics where they make logical
-sense; the production process will move them if needed.
-
-\subsection{Math(s)}
-
-The \textsf{achemso} class does not load any particular additional
-support for mathematics.  If packages such as \textsf{amsmath} are
-required, they should be loaded in the preamble.  However,
-the basic \LaTeX\ math(s) input should work correctly without
-this.  Some inline material \( y = mx + c \) or $ 1 + 1 = 2 $
-followed by some display. \[ A = \pi r^2 \]
-
-It is possible to label equations in the usual way (Eq.~\ref{eqn:example}).
-\begin{equation}
-  \frac{\mathrm{d}}{\mathrm{d}x} \, r^2 = 2r \label{eqn:example}
-\end{equation}
-This can also be used to have equations containing graphical
-content. To align the equation number with the middle of the graphic,
-rather than the bottom, a minipage may be used.
-\begin{equation}
-  \begin{minipage}[c]{0.80\linewidth}
-    \centering
-    As illustrated here, the width of \\
-    the minipage needs to allow some  \\
-    space for the number to fit in to.
-    %\includegraphics{graphic}
-  \end{minipage}
-  \label{eqn:graphic}
-\end{equation}
-
-\section{Experimental}
-
-The usual experimental details should appear here.  This could
-include a table, which can be referenced as Table~\ref{tbl:example}.
-Notice that the caption is positioned at the top of the table.
-\begin{table}
-  \caption{An example table}
-  \label{tbl:example}
-  \begin{tabular}{ll}
-    \hline
-    Header one  & Header two  \\
-    \hline
-    Entry one   & Entry two   \\
-    Entry three & Entry four  \\
-    Entry five  & Entry five  \\
-    Entry seven & Entry eight \\
-    \hline
-  \end{tabular}
-\end{table}
-
-Adding notes to tables can be complicated.  Perhaps the easiest
-method is to generate these using the basic
-\texttt{\textbackslash textsuperscript} and
-\texttt{\textbackslash emph} macros, as illustrated (Table~\ref{tbl:notes}).
-\begin{table}
-  \caption{A table with notes}
-  \label{tbl:notes}
-  \begin{tabular}{ll}
-    \hline
-    Header one                            & Header two \\
-    \hline
-    Entry one\textsuperscript{\emph{a}}   & Entry two  \\
-    Entry three\textsuperscript{\emph{b}} & Entry four \\
-    \hline
-  \end{tabular}
-
-  \textsuperscript{\emph{a}} Some text;
-  \textsuperscript{\emph{b}} Some more text.
-\end{table}
-
-The example file also loads the optional \textsf{mhchem} package, so
-that formulas are easy to input: \texttt{\textbackslash ce\{H2SO4\}}
-gives \ce{H2SO4}.  See the use in the bibliography file (when using
-titles in the references section).
-
-The use of new commands should be limited to simple things which will
-not interfere with the production process.  For example,
-\texttt{\textbackslash mycommand} has been defined in this example,
-to give italic, mono-spaced text: \mycommand{some text}.
-
-\section{Extra information when writing JACS Communications}
-
-When producing communications for \emph{J.~Am.\ Chem.\ Soc.}, the
-class will automatically lay the text out in the style of the
-journal. This gives a guide to the length of text that can be
-accommodated in such a publication. There are some points to bear in
-mind when preparing a JACS Communication in this way.  The layout
-produced here is a \emph{model} for the published result, and the
-outcome should be taken as a \emph{guide} to the final length. The
-spacing and sizing of graphical content is an area where there is
-some flexibility in the process.  You should not worry about the
-space before and after graphics, which is set to give a guide to the
-published size. This is very dependant on the final published layout.
-
-You should be able to use the same source to produce a JACS
-Communication and a normal article.  For example, this demonstration
-file will work with both \texttt{type=article} and
-\texttt{type=communication}. Sections and any abstract are
-automatically ignored, although you will get warnings to this effect.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% The "Acknowledgement" section can be given in all manuscript
-%% classes.  This should be given within the "acknowledgement"
-%% environment, which will make the correct section or running title.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{acknowledgement}
-
-Please use ``The authors thank \ldots'' rather than ``The
-authors would like to thank \ldots''.
-
-The author thanks Mats Dahlgren for version one of \textsf{achemso},
-and Donald Arseneau for the code taken from \textsf{cite} to move
-citations after punctuation. Many users have provided feedback on the
-class, which is reflected in all of the different demonstrations
-shown in this document.
-
-\end{acknowledgement}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% The same is true for Supporting Information, which should use the
-%% suppinfo environment.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{suppinfo}
-
-This will usually read something like: ``Experimental procedures and
-characterization data for all new compounds. The class will
-automatically add a sentence pointing to the information on-line:
-
-\end{suppinfo}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% The appropriate \bibliography command should be placed here.
-%% Notice that the class file automatically sets \bibliographystyle
-%% and also names the section correctly.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\bibliography{achemso-demo}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% The "tocentry" environment can be used to create an entry for the
-%% graphical table of contents.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\begin{tocentry}
-
-Some journals require a graphical entry for the Table of Contents.
-This should be laid out ``print ready'' so that the sizing of the
-text is correct.
-
-Inside the \texttt{tocentry} environment, the font used is Helvetica
-8\,pt, as required by \emph{Journal of the American Chemical
-Society}.
-
-The surrounding frame is 9\,cm by 3.5\,cm, which is the maximum
-permitted for  \emph{Journal of the American Chemical Society}
-graphical table of content entries. The box will not resize if the
-content is too big: instead it will overflow the edge of the box.
-
-This box and the associated title will always be printed on a
-separate page at the end of the document.
-
-\end{tocentry}
+I didn't do much work about the features in my experiment,
+which should be an important part in machine learning.
+In fact, I tried to use \emph{Principal Components Analysis} to cut off some features, 
+but it didn't work well. I referred to some high score solutions after my experiment,
+and found that their feature engineering was much more complex.
+Some of them even generated some features from the given training data,
+and got a very good result.
+I guess the better feature engineering is why they can get a higher score.
 
 \end{document}
