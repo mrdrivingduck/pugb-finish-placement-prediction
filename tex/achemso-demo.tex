@@ -14,6 +14,7 @@
 %% servers.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \usepackage[version=3]{mhchem} % Formula subscripts using \ce{}
+\usepackage[colorlinks,linkcolor=red]{hyperref}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% If issues arise when submitting your manuscript, you may want to
@@ -165,12 +166,63 @@ I choose \textbf{Decision Tree regressor} as the algorithm. The reason is that i
 save the effort of decomposition, since I don't know which feature is more important for 
 the result. It can judge the best feature for me.
 
-In order to train models by matches, I sort the whole training data by match type and matchID.
-For each matchID, I train a model using all rows with this matchID, and add the model to the 
+In order to train a model from a match, I sorted the whole training data by match type and matchID.
+For each matchID, I trained a model using all rows with this matchID, and added the model to the 
 set of corresponding match type. During prediction, I used all the models of that match type 
-to calculate the average result.
+to calculate a average result, which is an application of ensemble learning: considering
+the matches are inherently independent to each other, the model trained by each match 
+can do prediction independently.
 
-Specifically, 
+Specifically, to speed up the prediction, for match types with much more data, which corresponds
+to more models, I randomly sampled part of the models for prediction by a max predictor threshold.
+Also, I implemented the program in a multi-processes way, 
+which can fully utilize the multi-core CPU. The source code is available at my
+\href{https://github.com/mrdrivingduck/pugb-finish-placement-prediction/blob/master/src/main_multi_process_version.py}{GitHub}.
+
+\subsection{Version 2}
+
+For the second version of algorithm, I trained 100 models with about 45000 rows of data each,
+and used all models together to predict a record. I tried several ensumble learning algorithms,
+including \textbf{XGBoost regressor}, \textbf{Random Forest regressor}, \textbf{AdaBoost regressor}
+and \textbf{Gradient Boosting regressor}. They are all using ensemble method inside.
+I integrated them together for the seconde time of emsemble learning.
+The source code is available at my
+\href{https://github.com/mrdrivingduck/pugb-finish-placement-prediction/blob/master/src/main_ensemble.py}{GitHub}.
+
+\section{Results and Evaluation}
+
+\subsection{Version 1}
+
+For the version 1 algorithm, I tried different parameter of max predictor threshold.
+If a match type contains more models than the threshold, then only models of the
+threshold would get involved into the prediction.
+
+At first, I introduced this parameter for speeding up the prection process. However,
+according to the experiment, a greater threshold will not get a better score.
+I used the threshold of 500, 1000, 1500, 2000. 1500 gets the following best score, while 1000
+is not better than 500 and 2000 is not better than 1500.
+
+\begin{figure}
+  \includegraphics[height=2.4cm]{img/res-version-1.png}
+\end{figure}
+
+\subsection{Version 2}
+
+For the version2 algorithm, I just tried different ensemble learning method:
+\textbf{XGBoost regressor}, \textbf{Random Forest regressor}, \textbf{AdaBoost regressor}
+and \textbf{Gradient Boosting regressor}, Among which Random Forest regressor 
+got the following best score.
+
+\begin{figure}
+  \includegraphics[height=2.4cm]{img/res-version-2.png}
+\end{figure}
+
+
+\section{Thoughts}
+
+I didn't do much work about features, which should be an important part in machine learning.
+In fact, 
+
 
 
 \section{Results and discussion}
