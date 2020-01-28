@@ -8,7 +8,13 @@ Created by : Mr Dk.
 
 ---
 
+## About
+
 Poor code, nothing valuable.
+
+## License
+
+Copyright © 2020, Jingtang Zhang. ([MIT License](LICENSE))
 
 ---
 
